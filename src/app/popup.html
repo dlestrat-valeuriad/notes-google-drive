@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+    <link href="/lib/OpenSans.css" rel="stylesheet" type="text/css" />
+
+    <script type="text/javascript" src="/lib/moment.js"></script>
+    <script type="text/javascript" src="/lib/jquery.min.js"></script>
+    <script type="text/javascript" src="/lib/jquery.base64.min.js"></script>
+    <script type="text/javascript" src="/lib/iceburg-css.js"></script>
+
+    <link type="text/css" href="/lib/bootstrap/css/bootstrap.min.css" rel="stylesheet" />
+    <script type="text/javascript" src="/lib/bootstrap/js/bootstrap.min.js"></script>
+
+    <link type="text/css" href="/lib/font-awesome/css/font-awesome.min.css" rel="stylesheet" />
+
+    <link type="text/css" href="/lib/summernote.css" rel="stylesheet" />
+    <script type="text/javascript" src="/lib/summernote.min.js"></script>
+    <script type="text/javascript" src="/lib/markdown-it.js"></script>
+    <script type="text/javascript" src="/lib/summernote-ext-markdown.js"></script>
+
+    <link type="text/css" href="/lib/jquery-ui.min.css" rel="stylesheet" />
+    <script type="text/javascript" src="/lib/jquery-ui.min.js"></script>
+
+    <link type="text/css" href="popup.css" rel="stylesheet" />
+
+    <script type="text/javascript" src="/oauth2/oauth2.js"></script>
+    <script type="text/javascript" src="utils.js"></script>
+    <script type="text/javascript" src="gdrive.js"></script>
+    <script type="text/javascript" src="popup.js"></script>
+
+</head>
+<body>
+
+    <div id="header">
+
+        <div id="app-title">
+            Notes
+        </div>
+
+        <div id="app-actions">
+            <a id="settings-button" class="btn" href="#" data-toggle="tooltip" title="Settings" tabIndex="-1">
+                <i class="fa fa-cog"></i>
+            </a>
+        </div>
+
+    </div>
+
+    <div id="content">
+
+        <div id="auth-section">
+            <div id="auth-content">
+                <div class="title-text">Welcome to Notes for Google Drive</div>
+                <div class="subtitle-text">All your notes in one place, safe and secure in Google Drive.</div>
+                <br/>
+                <input type="button" class="btn" id="authorize-button" value="Sign In with your Google Account" />
+            </div>
+        </div>
+
+        <div id="first-use-section">
+            <div id="first-use-content">
+                <div class="title-text">Quick Tips</div>
+                <ul>
+                  <li>The first line of your note will be used as the title</li>
+                  <li>Items can be re-ordered by dragging and dropping to another position in the list</li>
+                  <li>Your notes will be automatically saved as Google Documents in the folder '<span class="drive-folder-name"></span>' in your Google Drive</li>
+                  <li>You can restore a trashed note from the Google Drive Trash folder</li>
+                  <li>You can adjust paragraph margins in the Options</li>
+                </ul>
+                <br/>
+                <div class="center">
+                  <input type="button" class="btn center" id="first-use-got-it-button" value="Got it!" />
+                </div>
+            </div>
+        </div>
+
+        <div id="loading-section">
+            <div id="loading-content">
+                <img id="loading-gif" src="img/loading.gif" />
+            </div>
+        </div>
+
+        <div id="message-section">
+            <div id="message-content"></div>
+        </div>
+
+        <div id="documents-section">
+            <div id="notes-list-container">
+                <div id="notes-list"></div>
+                <div id="notes-list-space"></div>
+            </div>
+
+            <div class="previewMarkdown" style="padding: 0px 28px 5px 5px; float:right; width:70%; height:82%; overflow:auto;"></div>
+            <div id="note-content-container">
+
+                <div class="summernote"></div>
+
+                <div id="active-note-footer">
+                  <div id="active-note-status"></div>
+
+                  <div id="active-note-actions">
+                    <a id="trash-button" class="" href="#" data-toggle="tooltip" title="Send to Trash" tabIndex="-1">
+                      <i class="fa fa-trash-o fa-lg trash-icon"></i>
+                    </a>
+                    <a id="edit-in-drive-button" class="" href="#" data-toggle="tooltip" title="Edit in Google Docs" tabIndex="-1">
+                      <i class="fa fa-edit fa-lg edit-icon"></i>
+                    </a>
+                  </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div id="actions-section">
+            <a id="new-button" class="" href="#" title="New Note">
+              <i class="fa fa-pencil fa-lg"></i>
+            </a>
+        </div>
+
+    </div>
+
+    <div id="rate-overlay"></div>
+    <div id="rate-dialog">
+        <img id="rate-star" src="img/rate-star.png" />
+
+        <h3>Hey there! Looks like you're finding me useful</h3>
+        Please help to spread the word and assist others in finding Notes for Google Drive by rating it 5 stars. Cheers!<br/>
+
+        <div id="rate-buttons" class="center">
+
+            <a id="rate-button" class="btn" href="#" tabIndex="-1">
+              Open in New Tab
+            </a>
+
+            <br/>
+
+            <a id="rate-dismiss-button" href="#" tabIndex="-1">
+              Maybe Later
+            </a>
+
+        </div>
+
+    </div>
+
+</body>
+</html>

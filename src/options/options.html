@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="shortcut icon" href="/src/app/img/favicon.ico" />
+
+    <link type="text/css" href="/lib/OpenSans.css" rel="stylesheet"  />
+
+    <script type="text/javascript" src="/lib/jquery.min.js"></script>
+    <script type="text/javascript" src="/lib/bootstrap/js/bootstrap.min.js"></script>
+
+    <link type="text/css" href="/lib/bootstrap/css/bootstrap.min.css" rel="stylesheet" />
+    <link type="text/css" href="/lib/font-awesome/css/font-awesome.min.css" rel="stylesheet" />
+
+    <link type="text/css" href="options.css" rel="stylesheet" />
+    <script type="text/javascript" src="options.js"></script>
+
+    <title>Settings</title>
+</head>
+<body>
+
+<div class="title">Notes for Google Drive</div>
+
+<div class="section-container">
+
+  <div class="subtitle">Preferences</div>
+  <hr/>
+
+  <div id="space-paragraphs-container">
+    <input type="checkbox" id="space-paragraphs-check" /> <span id="space-paragraphs-label">Add margin below paragraphs</span>
+  </div>
+
+</div>
+
+<div class="section-container">
+
+    <div class="subtitle">Account</div>
+    <hr/>
+
+    <input type="button" class="btn" id="open-folder-button" value="Open your Notes folder in Google Drive" /> <br/>
+
+    <input type="button" class="btn" id="sign-out-button" value="Sign Out of Notes for Google Drive" />
+    <span id="signed-in-as"></span>
+
+</div>
+
+<div class="section-container">
+
+    <div class="subtitle">About</div>
+    <hr/>
+
+    <div class="text">
+
+        <div id="versions"></div>
+
+        Bugs, feedback or feature requests? <a href="mailto:esheppard@gmail.com?subject=Notes%20for%20Google%20Drive">Email me</a> :)
+        <br/><br/>
+<!--
+        Love the extension? A donation to show your love would be very much appreciated!
+        <br/><br/>
+          <form action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_top">
+          <input type="hidden" name="cmd" value="_donations">
+          <input type="hidden" name="business" value="esheppard@gmail.com">
+          <input type="hidden" name="lc" value="AU">
+          <input type="hidden" name="item_name" value="Elijah Sheppard - Notes for Drive">
+          <input type="hidden" name="no_note" value="0">
+          <input type="hidden" name="currency_code" value="AUD">
+          <input type="hidden" name="bn" value="PP-DonationsBF:btn_donateCC_LG.gif:NonHostedGuest">
+          <input type="image" src="https://www.paypalobjects.com/en_AU/i/btn/btn_donateCC_LG.gif" border="0" name="submit" alt="PayPal — The safer, easier way to pay online.">
+          <img alt="" border="0" src="https://www.paypalobjects.com/en_AU/i/scr/pixel.gif" width="1" height="1">
+        </form>
+        <br/>
+-->
+        Developed by Elijah Sheppard<!-- <a href="http://www.elijahsheppard.com">Elijah Sheppard</a> --> <span class="dot">&bull;</span>
+        <a href="http://chrome.google.com/webstore/detail/notes-for-drive/ndidogegapfaolpcebadjknkdlladffa">View Notes for Google Drive on the Chrome Web Store</a>
+
+    </div>
+
+</div>
+
+</body>
+</html>

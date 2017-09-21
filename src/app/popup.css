@@ -1,0 +1,593 @@
+body
+{
+    background-color: #fff;
+    padding: 0px;
+    margin: 0px;
+    height: 500px;
+    width: 750px;
+    font-family: Helvetica, Ubuntu, Arial, sans-serif;
+}
+
+h1
+{
+    font-size: 2em;
+}
+
+h3
+{
+    font-size: 1.2em;
+}
+
+
+.title-text
+{
+    font-size: 1.5em;
+    color: #5d5d5d;
+    margin-bottom: 8px;
+}
+
+.subtitle-text
+{
+    font-size: 1.2em;
+    color: #5d5d5d;
+    margin-bottom: 6px;
+}
+
+.center
+{
+    text-align: center;
+}
+
+
+#header
+{
+    position: absolute;
+    width: 100%;
+    height: 44px;
+    top: 0;
+    background-color: #4EB9FF;
+}
+
+#content
+{
+    position: absolute;
+    width: 100%;
+    top: 42px;
+    bottom: 0;
+}
+
+
+#auth-section
+{
+    width: 100%;
+    height: 100%;
+    display: none;
+}
+
+#message-section
+{
+    width: 100%;
+    height: 100%;
+    display: none;
+}
+
+#loading-section
+{
+    width: 100%;
+    height: 100%;
+    display: none;
+}
+
+#documents-section
+{
+    width: 100%;
+    height: 100%;
+    display: none;
+}
+
+#first-use-section
+{
+    width: 100%;
+    height: 100%;
+    display: none;
+}
+
+
+#auth-content
+{
+    text-align: center;
+}
+
+#loading-content
+{
+    text-align: center;
+}
+
+#message-content
+{
+    text-align: center;
+    font-size: 1.2em;
+    font-family: 'Open Sans', sans-serif;
+    color: #696969;
+}
+
+#first-use-content
+{
+    text-align: left;
+    padding: 50px;
+}
+
+#first-use-content ul li
+{
+    font-size: 1.1em;
+    font-family: 'Open Sans', sans-serif;
+    color: #444444;
+    padding-top: 4px;
+    padding-bottom: 4px;
+}
+
+
+.notes-list-item
+{
+    cursor: pointer;
+    padding: 14px 8px 14px 8px;
+    position: relative;
+}
+.notes-list-item:hover
+{
+    background-color: #514343;
+}
+.notes-list-item.active
+{
+    color: white;
+    background-color: #4A3C3C;
+}
+.notes-list-item .arrow
+{
+    width: 8px;
+    height: 23px;
+    position: absolute;
+    z-index: 10;
+    top: 13px;
+    right: 0px;
+    border-right: none;
+    overflow: hidden;
+}
+
+.notes-list-item p
+{
+    margin: 0;
+    color: white;
+    font-size: 1em;
+}
+
+
+#notes-list-container
+{
+    width: 30%;
+    height: 100%;
+    float: left;
+    overflow-y: auto;
+    background-color: #5F5050;
+}
+
+#notes-list-container::-webkit-scrollbar
+{
+    -webkit-appearance: none;
+}
+#notes-list-container::-webkit-scrollbar:vertical
+{
+    width: 0px;
+}
+
+
+#notes-list-space
+{
+    height: 100%;
+}
+
+
+#notes-list-buttons
+{
+    width: 30%;
+    float: left;
+    margin-top: 3px;
+    display: none;
+}
+
+
+#note-content-container
+{
+    width: 70%;
+    height: 100%;
+    float: right;
+    background-color: white;
+}
+
+#active-note-footer
+{
+    position: absolute;
+    height: 40px;
+    bottom: 0;
+    right: 1%;
+    width: 68%;
+    background-color: white;
+    border-top: 1px solid #d6d6d6;
+    z-index: 20;
+}
+
+
+#active-note-actions
+{
+    float: right;
+    width: 50%;
+}
+
+#active-note-status
+{
+    float: left;
+    width: 50%;
+    margin-left: 0px;
+    margin-top: 9px;
+    color: rgb(124, 124, 124);
+    opacity: 0.6;
+    font-size: 1em;
+    transition: opacity 0.1s linear;
+}
+
+
+#app-title
+{
+    color: white;
+    font-size: 1.2em;
+    position: absolute; bottom: 9px; left: 8px;
+}
+
+#app-actions
+{
+    position: absolute; bottom: 1px; right: 3px;
+}
+
+#settings-button
+{
+    padding: 5px;
+    color: rgba(255, 255, 255, 0.25);
+    font-size: 1.6em;
+    transition: color 0.1s linear;
+    outline: none;
+    box-shadow: none;
+}
+#settings-button:hover
+{
+    color: #fff;
+}
+
+
+#authorize-button
+{
+    color: white;
+    font-family: 'Open Sans', sans-serif;
+    outline: none;
+    box-shadow: none;
+    background-color: #4b74ff;
+    transition: all 0.1s linear;
+}
+#authorize-button:hover
+{
+    background-color: #3e5fe5;
+}
+
+
+#first-use-got-it-button
+{
+    color: white;
+    font-family: 'Open Sans', sans-serif;
+    outline: none;
+    box-shadow: none;
+    background-color: #4b74ff;
+    transition: all 0.1s linear;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+#first-use-got-it-button:hover
+{
+    background-color: #3e5fe5;
+}
+
+
+#new-button
+{
+    width: 40px;
+    height: 40px;
+    position: absolute;
+    left: 7px;
+    bottom: 7px;
+    padding-top: 10px;
+    padding-left: 12px;
+    color: #ffffff;
+    background-color: #4EB9FF;
+    border-radius: 20px;
+    outline: none;
+    box-shadow: none;
+    transition: all 0.1s linear;
+}
+#new-button:hover
+{
+    background-color: #3DA0E0;
+}
+
+
+#trash-button, #edit-in-drive-button
+{
+    color: #d6d6d6;
+    outline: none;
+    box-shadow: none;
+    transition: color 0.1s linear;
+    display: block;
+    float: right;
+    margin-top: 8px;
+    margin-left: 7px;
+    padding: 1px;
+}
+#trash-button:hover, #edit-in-drive-button:hover
+{
+    color: #5d5d5d;
+}
+
+#edit-in-drive-button
+{
+    padding-top: 2px;
+}
+
+.trash-icon, .edit-icon
+{
+    font-size: 19px;
+}
+
+
+#rate-overlay
+{
+    background-color: #000;
+    opacity: 0.4;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: none;
+    z-index: 1001;
+}
+
+#rate-dialog
+{
+    width: 500px;
+    height: 200px;
+    opacity: 1;
+    background-color: white;
+
+    padding: 10px;
+
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+
+    margin: auto;
+    display: none;
+    z-index: 1002;
+}
+
+#rate-star
+{
+    float: left;
+    padding: 10px;
+    margin-top: 15px;
+    margin-right: 10px;
+}
+
+
+#rate-buttons
+{
+    position: absolute;
+    bottom: 20px;
+    left: 0;
+    right: 0;
+    height: 60px;
+}
+
+#rate-button
+{
+    position: relative;
+    margin-bottom: 10px;
+    color: #ffffff;
+    background-color: #92D549;
+    border-radius: 4px;
+    outline: none;
+    box-shadow: none;
+    transition: all 0.1s linear;
+}
+#rate-button:hover
+{
+    background-color: #94C85C;
+}
+
+#rate-dismiss-button
+{
+  position: relative;
+  margin-bottom: 20px;
+  color: #999999;
+  outline: none;
+  box-shadow: none;
+  transition: all 0.1s linear;
+}
+#rate-dismiss-button:hover
+{
+  color: #333333;
+  text-decoration: none;
+}
+
+
+/* Bootstrap Overrides */
+
+.tooltip-inner
+{
+    max-width:none;
+    white-space:pre;
+}
+
+
+/* Summernote Overrides */
+
+.note-editor .note-toolbar
+{
+    border-bottom: 1px solid #d6d6d6;
+}
+
+.note-editable p
+{
+  margin-bottom: 10px;
+}
+
+.note-editable ul, ol
+{
+  padding-top: 1px;
+  margin-top: -10px; /* offsets <p> margin bottom */
+  margin-bottom: 14px;
+}
+.note-editable ul
+{
+  padding-left: 32px;
+}
+.note-editable ol
+{
+  padding-left: 35px;
+}
+
+
+
+/*
+.note-editable ul li
+{
+  font-size: 14px;
+  list-style: none;
+}
+
+.note-editable ul li:before
+{
+  content: '';
+  display: block;
+  height: 6px;
+  width: 6px;
+  background-image: url('img/bullet-point.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  position: relative;
+  top: 12.5px;
+  left: -15px;
+  padding-left: 0px;
+}
+
+.note-editable li span
+{
+  line-height: 21px;
+}*/
+
+
+.note-editable ul li
+{
+  position: relative;
+  list-style: none;
+  margin-left: 0;
+  padding-left: 0;
+  padding-top: 3px;
+  line-height: 21px;
+}
+
+.note-editable ul li:before
+{
+  position: absolute;
+  top: 4px;
+  left: -14px;
+  content: '\2022';
+  color: black;
+  font-size: 20px;
+}
+
+
+
+
+
+/* OLD
+.note-editable ul li
+{
+font-size: 18px;
+line-height: 21px;
+}
+
+.note-editable li span
+{
+font-size: 14px;
+position: relative;
+left: -3px;
+}*/
+
+/* OLDER
+.note-editable ul
+{
+  list-style: none;
+  padding: 6px 0 0 0;
+}
+
+.note-editable li span
+{
+  font-size: 16px;
+  border-bottom: 1px dotted #cfcfcf;
+  display: block;
+  padding: 10px 0 10px 0;
+}
+
+.note-editable li input[type='checkbox']
+{
+  cursor: pointer;
+  margin-right: 3px;
+}
+*/
+
+
+.note-editable::-webkit-scrollbar
+{
+  width: 7px;
+  height: 7px;
+}
+.note-editable::-webkit-scrollbar-button
+{
+  width: 0px;
+  height: 0px;
+}
+.note-editable::-webkit-scrollbar-thumb
+{
+  background:rgba(0,0,0,0.2);
+  border: 0px none #ffffff;
+  border-radius: 50px;
+}
+.note-editable::-webkit-scrollbar-thumb:hover
+{
+  background:rgba(0,0,0,0.4);
+}
+.note-editable::-webkit-scrollbar-thumb:window-inactive
+{
+  background:rgba(0,0,0,0.05);
+}
+.note-editable::-webkit-scrollbar-track
+{
+  background: #ffffff;
+  border: 0px none #ffffff;
+  border-radius: 50px;
+}
+.note-editable::-webkit-scrollbar-corner
+{
+  background: transparent;
+}

@@ -1,0 +1,629 @@
+
+var MAX_DOCS = 100;
+var DEFAULT_FOLDER_NAME = 'Notes';
+
+var StateEnum =
+{
+    IDLE: 1,
+    CACHING: 2
+};
+var state = StateEnum.IDLE;
+
+var gdrive = null;
+var lastActiveDocId = null;
+var cacheUpdateTimer = null;
+
+var cache =
+{
+    folder: null,
+    documents: []
+};
+
+chrome.runtime.onInstalled.addListener(function(details)
+{
+    if(details.reason == "install")
+    {
+        chrome.tabs.create({url: '/src/app/installed.html'});
+    }
+    else if(details.reason == "update")
+    {
+        var thisVersion = chrome.runtime.getManifest().version;
+
+        if(thisVersion == "1.6")
+        {
+            chrome.tabs.create({url: '/src/app/updated.html'});
+        }
+    }
+});
+
+
+document.addEventListener("DOMContentLoaded", function()
+{
+    gdrive = new GDrive();
+
+    gdrive.setupOAuth(
+    {
+        client_id: '747134525486-5ocg32qs9hcvpl0e28991qm1n7v91415.apps.googleusercontent.com',
+        client_secret: 'DuJnObwE3UiVdHEJ98URNvft',
+        api_scope: 'https://www.googleapis.com/auth/drive.file'
+    });
+
+    loadState();
+    gdrive.auth({interactive:false}, onAuthenticated);
+
+    // automatically update the cache every 10 minutes
+    var updateCacheFn = function()
+    {
+        if(gdrive.oauth.hasAccessToken()) {
+            updateCache();
+        }
+    };
+
+    cacheUpdateTimer = setInterval(updateCacheFn, 1000*60*10);
+});
+
+
+chrome.runtime.onConnect.addListener(function(port_connected)
+{
+    // disallow interactive reauthentication on 401's only during background cache updates
+    if(port_connected.name == 'popup')
+    {
+        gdrive.setAllowInteractiveReauth(true);
+
+        port_connected.onDisconnect.addListener(function(port_disconnected)
+        {
+            gdrive.setAllowInteractiveReauth(false);
+
+            removeEmptyDocuments();
+            storeOrder(cache.documents);
+        });
+    }
+});
+
+
+function loadState()
+{
+    LAST_ACTIVE_DOC_ID = 'last-active-doc-id';
+
+    chrome.storage.sync.get(LAST_ACTIVE_DOC_ID, function(result)
+    {
+        lastActiveDocId = result[ LAST_ACTIVE_DOC_ID ];
+    });
+}
+
+
+function onAuthenticated()
+{
+    updateCache();
+}
+
+
+function updateCache(completed)
+{
+    //console.log("in updateCache, state=" + state);
+
+    if(state == StateEnum.CACHING)
+        return;
+
+    state = StateEnum.CACHING;
+
+    var completed_wrapper = function(changesMade)
+    {
+        cache.lastChecked = new Date();
+        state = StateEnum.IDLE;
+
+        if(changesMade)
+        {
+            chrome.runtime.sendMessage({'cacheUpdated': cache.lastUpdated});
+        }
+        else
+        {
+            // edge case for when folder created during a different session or on a different machine
+            if(!cache.lastUpdated) {
+                chrome.runtime.sendMessage({'initialCacheUpdateComplete': true});
+            }
+        }
+
+        if(completed)
+            completed();
+    };
+
+    if(!cache.folder)
+    {
+        getFolder(DEFAULT_FOLDER_NAME, function(folder)
+        {
+            if(folder)
+            {
+                cache.folder = folder;
+                cacheDocs( function() {
+                    completed_wrapper(true); // first time opening (or creating) folder this session - force changesMade=true
+                });
+            }
+            else
+                completed_wrapper(false);
+        });
+    }
+    else
+    {
+        cacheDocs(completed_wrapper);
+    }
+}
+
+
+function getFolder(name, completed)
+{
+    var success = function(response)
+    {
+        if( response.items && response.items.length > 0)
+        {
+            completed( response.items[0] );
+        }
+        else
+        {
+            setupDocumentsFolder(name, completed);
+        }
+    };
+
+    var error = function(xhr)
+    {
+        setupDocumentsFolder(name, completed);
+    };
+
+    var query =
+    {
+        name: name,
+        inParent: 'root',
+        onlyFolders: true
+    };
+
+    gdrive.searchFileByName(query, success, error);
+}
+
+
+function setupDocumentsFolder(name, completed)
+{
+    var success = function(response)
+    {
+      cache.lastUpdated = new Date();
+
+        if(completed) {
+            completed(response);
+        }
+    };
+
+    var failure = function()
+    {
+        if(completed) {
+            completed();
+        }
+    };
+
+    gdrive.createFolder(name, 'root', success, failure);
+}
+
+
+function cacheDocs(completed)
+{
+    //console.log("enter cacheDocs");
+
+    cachingDocuments = [];
+
+    var finaliseCacheDocs = function()
+    {
+        //console.log("in finaliseCacheDocs");
+
+        var changesMade = containsChanges(cache.documents, cachingDocuments);
+
+        if(changesMade)
+        {
+            restoreOrder(cachingDocuments);
+
+            cache.documents = cachingDocuments;
+            cache.lastUpdated = new Date();
+        }
+
+        if(completed)
+            completed(changesMade);
+    };
+
+    var checkComplete = function()
+    {
+        //console.log("in checkComplete");
+
+        // check caching has completed
+        if( haveAllDownloaded(cachingDocuments) )
+        {
+            finaliseCacheDocs();
+        }
+        else {
+          //console.log("in checkComplete - !haveAllDownloaded");
+        }
+    };
+
+    var listChildrenSuccess = function(children_response)
+    {
+        //console.log("in gdrive.listChildrenDocs");
+
+        if(children_response && children_response.items && children_response.items.length)
+        {
+            children_response.items.forEach( function(child, index)
+            {
+                var doc =
+                {
+                    item: null,
+                    contentHTML: '',
+                    hasDownloaded: false
+                };
+
+                cachingDocuments.push(doc);
+            });
+
+            var delay_ms = 0;
+
+            children_response.items.forEach( function(child, index)
+            {
+                //console.log("cacheDocs listChildrenDocs calling getFile..");
+
+                var retrieve = function()
+                {
+                    gdrive.getFile(child.id, function(item)
+                    {
+                        //console.log("in gdrive.listChildrenDocs gdrive.getFile - " + item.title);
+
+                        var doc = cachingDocuments[index];
+                        doc.item = item;
+                        doc.title = item.title;
+                        doc.cursorPos = item.cursorPos;
+
+                        var cachedDoc = matchDocumentById(doc.item.id, cache.documents);
+                        var requiresDownload = true;
+
+                        if(cachedDoc)
+                        {
+                            //var diff = cachedDoc.item.version != doc.item.version ? " ---- DIFF" : '';
+                            //console.log('Doc \'' + doc.item.title + '\' - cached version: ' + cachedDoc.item.version + ', google version: ' + doc.item.version + diff);
+                        }
+
+                        if(cachedDoc && cachedDoc.item.version == doc.item.version)
+                        {
+                            //console.log("in gdrive.listChildrenDocs gdrive.getFile - hasDownloaded YES");
+
+                            requiresDownload = false;
+
+                            doc.title = cachedDoc.title;
+                            doc.contentHTML = cachedDoc.contentHTML;
+                            doc.hasDownloaded = true;
+                        }
+
+                        if(requiresDownload)
+                        {
+                            //console.log("in gdrive.listChildrenDocs gdrive.getFile - requires download");
+
+                            gdrive.download(item.exportLinks['text/html'], function(responseData)
+                            {
+                                //console.log("in gdrive.listChildrenDocs gdrive.getFile - download completed");
+
+                                var cleaned = cleanGoogleDocHTML(responseData);
+
+                                doc.contentHTML = "<style type=\"text/css\" scoped>" + cleaned.css + "</style>" + cleaned.html;
+                                doc.hasDownloaded = true;
+
+                                checkComplete();
+                            });
+                        }
+                        else
+                        {
+                            checkComplete();
+                        }
+                    });
+                }
+
+                // space each document retrieval apart by 50ms to avoid rate-limiting
+                delay_ms += 50;
+                setTimeout(retrieve, delay_ms);
+            });
+        }
+        else
+        {
+            finaliseCacheDocs();
+        }
+    }
+
+    var listChildrenFailure = function()
+    {
+        finaliseCacheDocs();
+    }
+
+    gdrive.listChildrenDocs(cache.folder.id, MAX_DOCS, listChildrenSuccess, listChildrenFailure);
+}
+
+function matchDocumentById(itemId, list)
+{
+    for(var i = 0; i < list.length; ++i)
+    {
+        var listDoc = list[i];
+
+        if(listDoc.item && listDoc.item.id == itemId)
+        {
+            return listDoc;
+        }
+    }
+
+    return null;
+}
+
+function containsChanges(docListA, docListB)
+{
+    // first clean the lists to remove notes that have not yet been synced to the server
+    var cleanListA = removeUnsynced(docListA);
+    var cleanListB = removeUnsynced(docListB);
+
+    if(!cleanListA && !cleanListB)
+      return false;
+
+    if(!cleanListA || !cleanListB)
+      return true;
+
+    if(cleanListA.length != cleanListB.length)
+      return true;
+
+    // test to see if every doc is contained in each list and modified dates are not different
+    for(var i = 0; i < cleanListA.length; ++i)
+    {
+        var docA = cleanListA[i];
+        var docB = matchDocumentById( docA.item.id, cleanListB );
+
+        if(!docB)
+            return true;
+
+        if(docA.item.version != docB.item.version)
+            return true;
+    }
+
+    return false;
+}
+
+function removeUnsynced(docList)
+{
+    var cleanList = [];
+
+    for(var i = 0; i < docList.length; ++i)
+    {
+        var doc = docList[i];
+
+        if(!doc.requiresInsert)
+            cleanList.push(doc);
+    }
+
+    return cleanList;
+}
+
+function removeEmptyDocuments()
+{
+    var keep = [];
+
+    for(var i = 0; i < cache.documents.length; ++i)
+    {
+        var doc = cache.documents[i];
+
+        if(doc.contentHTML)
+            keep.push(doc);
+    }
+
+    cache.documents = keep;
+}
+
+function haveAllDownloaded(docs)
+{
+    for(var i = 0; i < docs.length; i++)
+    {
+        var doc = docs[i];
+
+        if(!doc.hasDownloaded)
+        {
+            //console.log("has not downloaded: " + doc.title);
+            return false;
+        }
+    }
+    return true;
+}
+
+
+function storeOrder(docs)
+{
+    if(!docs)
+        return;
+
+    var identifiers = [];
+
+    for(var i = 0; i < docs.length; i++)
+    {
+        var doc = docs[i];
+
+        if(doc.item)
+            identifiers.push(doc.item.id);
+    }
+
+    chrome.storage.sync.set( {'document-order':identifiers} );
+}
+
+
+function restoreOrder(docs)
+{
+    if(!docs || !docs.length)
+        return;
+
+    chrome.storage.sync.get('document-order', function(result)
+    {
+        var identifiers = result['document-order'];
+
+        if(!identifiers || !identifiers.length)
+            return;
+
+        for(var i = 0, to = 0; i < identifiers.length && i < docs.length; i++)
+        {
+            var docId = identifiers[i];
+            var index = indexOfDocumentWithId(docs, docId);
+
+            if(index >= 0)
+            {
+                docs.move(index, to++);
+            }
+        }
+    })
+}
+
+
+function indexOfDocumentWithId(docList, docId)
+{
+    for(var i = 0; i < docList.length; i++)
+    {
+        var doc = docList[i];
+
+        if(doc.item && doc.item.id == docId)
+            return i;
+    }
+
+    return -1;
+}
+
+
+Array.prototype.move = function(from, to)
+{
+    if(from != to)
+        this.splice(to, 0, this.splice(from, 1)[0]);
+};
+
+
+function debug_printDocs(docsList, name)
+{
+    console.log(name + ':');
+
+    if(!docsList || docsList.length == 0)
+    {
+        console.log('- is empty');
+        return;
+    }
+
+    for(var i = 0; i < docsList.length; ++i)
+    {
+        var doc = docsList[i];
+        console.log('- ' + doc.item.title + ' - ' + doc.item.version + ' - ' + doc.item.id);
+    }
+}
+
+
+function saveDocument(doc, callback_started, callback_completed)
+{
+    if(!doc || !doc.dirty || doc.saving)
+        return;
+
+    //console.log(doc.contentHTML);
+
+    doc.saving = true;
+    doc.dirty = false;
+
+    if(callback_started)
+        callback_started();
+
+    var success = function(item_response)
+    {
+        doc.item = item_response;
+        doc.saving = false;
+
+        cache.lastUpdated = new Date();
+
+        // update the list item element id (ie. for the case when the doc required insertion and had a guid)
+        doc.$notesListElement.attr('id', doc.item.id);
+
+        if(callback_completed)
+            callback_completed();
+
+        // automatically save pending changes once current save has completed
+        if(doc.dirty)
+            saveDocument(doc, callback_started, callback_completed);
+    };
+
+    if(doc.requiresInsert)
+    {
+        doc.requiresInsert = false;
+        gdrive.insertAsHTML(cache.folder.id, doc.title, doc.contentHTML, success);
+    }
+    else
+    {
+        gdrive.overwriteAsHTML(doc.item.id, doc.title, doc.contentHTML, success);
+    }
+}
+
+
+function cleanGoogleDocHTML(html)
+{
+    var bodyContent = contentOfFirstTag('body', html);
+    var styleContent = contentOfFirstTag('style', html);
+
+    // remove empty span's and replace empty p's (including those with classes) with a line break
+    bodyContent = bodyContent
+        .replace(/<div><span>/g, '<p>')
+        .replace(/<\/span><\/div>/g, '</p>')
+        .replace(/<span><\/span>/g, '')
+        .replace(/<span class=\"([\w\s]*)\"><\/span>/g, '')
+        .replace(/<p style>/g, '<p>')
+        .replace(/<p><\/p>/g, '<p><br/></p>')
+        .replace(/<p class=\"([\w\s]*)\"><\/p>/g, '<p><br/></p>');
+
+    // replace headings with bold spans
+    bodyContent = bodyContent
+        .replace(/<h1/g, '<b')
+        .replace(/<\/h1>/g, '</b>')
+        .replace(/<h2/g, '<b')
+        .replace(/<\/h2>/g, '</b>')
+        .replace(/<h3/g, '<b')
+        .replace(/<\/h3>/g, '</b>')
+        .replace(/<h4/g, '<b')
+        .replace(/<\/h4>/g, '</b>')
+        .replace(/<h5/g, '<b')
+        .replace(/<\/h5>/g, '</b>')
+        .replace(/<h6/g, '<b')
+        .replace(/<\/h6>/g, '</b>');
+
+    var $content = $('<div>' + bodyContent + '</div>');
+
+    // remove classes that we don't use and may get in our way (ie. everything that does not start with a 'c')
+    $content.find('*').each(function()
+    {
+        var $elem = $(this);
+        var classes = this.className.split(/\s+/);
+
+        $.each(classes, function(i, c)
+        {
+            if(c.length > 0 && c.indexOf('c') !== 0)
+            {
+                $elem.removeClass(c);
+            }
+        });
+    });
+
+    // remove all selectors that dont start with '.c' from style content
+    var cssParser = new IceburgCSS(styleContent);
+
+    cssParser.ruleSets = cssParser.ruleSets.filter( function(ruleSet)
+    {
+        return ruleSet.selector.startsWith(".c");
+    });
+
+    // remove all properties except those we explicitly allow (eg. line-height will really mess us up)
+    var allowProperties = ["color", "background-color", "font-style", "font-weight"];
+
+    cssParser.ruleSets.forEach( function(ruleSet)
+    {
+        ruleSet.declarations = ruleSet.declarations.filter( function(decl)
+        {
+            return allowProperties.indexOf( decl.property ) > -1;
+        })
+    });
+
+    return {
+        css: cssParser.cssText(),
+        html: $content.html()
+    }
+}
